@@ -274,6 +274,9 @@ By default the app runs models in-process through the same `ModelService` as the
 `NEUROLENS_API_URL=http://localhost:8000` to make it call the API instead. Prediction is disabled
 (with setup instructions) when no trained checkpoint exists.
 
+Publishing a live demo (Streamlit Community Cloud, Hugging Face Spaces or any Docker host) is
+covered in [docs/deployment.md](docs/deployment.md).
+
 ### Screenshots
 
 Captured from the running app with the models trained above. The MRI shown is a `Testing` image

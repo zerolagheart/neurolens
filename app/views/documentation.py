@@ -17,6 +17,7 @@ SECTIONS = {
     "Training & evaluation": "training_evaluation.md",
     "Grad-CAM": "explainability.md",
     "ONNX export": "onnx.md",
+    "Deployment": "deployment.md",
     "API": "api.md",
     "Limitations": "limitations.md",
 }
