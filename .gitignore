@@ -1,0 +1,38 @@
+# Dataset and generated outputs (never commit the Kaggle data, checkpoints or reports).
+# Anchored to the repo root so the `src/neurolens/data` package is not ignored.
+/data/
+/artifacts/
+*.pt
+*.pth
+*.onnx
+*.ckpt
+mlruns/
+
+# Environments and secrets
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+kaggle.json
+.kaggle/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Notebooks / editors / OS
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

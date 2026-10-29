@@ -1,0 +1,42 @@
+# API + Streamlit frontend. Trained runs and reports are mounted read-only from ./artifacts;
+# train on the host first (the containers never train or download the dataset).
+services:
+  api:
+    build: .
+    image: neurolens:latest
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NEUROLENS_RUNS_DIR: /app/artifacts/runs
+      NEUROLENS_REPORTS_DIR: /app/artifacts/reports
+      NEUROLENS_DEVICE: cpu
+      NEUROLENS_CORS_ORIGINS: http://localhost:8501
+    volumes:
+      - ./artifacts:/app/artifacts:ro
+    ports:
+      - "8000:8000"
+
+  frontend:
+    image: neurolens:latest
+    depends_on:
+      api:
+        condition: service_healthy
+    command: ["streamlit", "run", "app/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    environment:
+      NEUROLENS_API_URL: http://api:8000
+      NEUROLENS_RUNS_DIR: /app/artifacts/runs
+      NEUROLENS_AUDIT_DIR: /app/artifacts/audit
+      NEUROLENS_SPLITS_DIR: /app/artifacts/splits
+      NEUROLENS_DATA_ROOT: /app/data/raw/brain-tumor-mri-dataset
+    volumes:
+      - ./artifacts:/app/artifacts:ro
+      # Optional: mount the dataset to enable duplicate-pair previews in the Dataset Explorer.
+      # - ./data:/app/data:ro
+    ports:
+      - "8501:8501"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

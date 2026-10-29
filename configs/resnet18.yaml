@@ -1,0 +1,44 @@
+# ResNet-18 fine-tuned from ImageNet weights (torchvision downloads them once to the torch cache).
+experiment_name: resnet18_baseline
+seed: 42
+runs_dir: artifacts/runs
+
+data:
+  root: data/raw/brain-tumor-mri-dataset
+  benchmark: original          # original | leakage_audited (run `neurolens audit` first)
+  val_fraction: 0.15           # carved out of Training; Testing is never used for selection
+  splits_dir: artifacts/splits
+  audit_dir: artifacts/audit
+  num_workers: 4
+
+preprocessing:
+  image_size: 224
+  mean: [0.485, 0.456, 0.406]  # ImageNet statistics, required by the pretrained backbone
+  std: [0.229, 0.224, 0.225]
+
+augmentation:                  # training split only
+  enabled: true
+  hflip_p: 0.5
+  rotation_degrees: 10
+  scale: [0.85, 1.0]
+  brightness: 0.1
+  contrast: 0.1
+
+model:
+  architecture: resnet18
+  pretrained: true
+  dropout: 0.2
+  freeze_backbone: false
+
+training:
+  epochs: 12
+  batch_size: 32
+  lr: 0.0003
+  weight_decay: 0.0001
+  optimizer: adamw
+  scheduler: cosine
+  label_smoothing: 0.0
+  monitor: val_macro_f1
+  early_stopping_patience: 4
+  amp: true                    # mixed precision on CUDA only
+  device: auto

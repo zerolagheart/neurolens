@@ -1,0 +1,32 @@
+# Compact CNN trained from scratch. Needs more epochs and a higher learning rate than fine-tuning.
+experiment_name: custom_cnn_baseline
+seed: 42
+
+data:
+  root: data/raw/brain-tumor-mri-dataset
+  benchmark: original
+  val_fraction: 0.15
+  num_workers: 4
+
+preprocessing:
+  image_size: 224
+
+augmentation:
+  enabled: true
+  rotation_degrees: 10
+
+model:
+  architecture: custom_cnn
+  pretrained: false
+  dropout: 0.3
+
+training:
+  epochs: 25
+  batch_size: 32
+  lr: 0.001
+  weight_decay: 0.0005
+  scheduler: cosine
+  monitor: val_macro_f1
+  early_stopping_patience: 6
+  amp: true
+  device: auto

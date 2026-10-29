@@ -1,0 +1,15 @@
+data/
+artifacts/
+.venv/
+venv/
+.git/
+.github/
+.env
+.env.*
+!.env.example
+**/__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+*.pt
+*.onnx
