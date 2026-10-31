@@ -5,6 +5,8 @@
 *.pt
 *.pth
 *.onnx
+# ...except the exported web bundle that the Vercel demo serves (see deploy/vercel/README.md)
+!/deploy/vercel/model/*.onnx
 *.ckpt
 mlruns/
 

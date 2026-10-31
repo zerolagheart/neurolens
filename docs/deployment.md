@@ -71,7 +71,16 @@ to confirm that redistributing a model trained on it is allowed.
 
 ## 3. Hosting options
 
-### Streamlit Community Cloud (free, simplest for this app)
+### Vercel (static page + serverless ONNX function)
+
+Vercel cannot host the Streamlit app, which needs a long-running WebSocket server and PyTorch.
+`deploy/vercel/` is a separate, PyTorch-free web demo built for Vercel: a static page plus one
+Python function that runs the exported model with ONNX Runtime and computes Grad-CAM exactly
+from the exported feature maps. The repository already includes the EfficientNet-B0 bundle.
+In Vercel, import the repository and set **Root Directory** to `deploy/vercel`. Full steps are
+in [deploy/vercel/README.md](../deploy/vercel/README.md).
+
+### Streamlit Community Cloud (free, simplest for the full Streamlit app)
 
 1. Push the repository to GitHub (done: `zerolagheart/neurolens`).
 2. Add a `requirements.txt` at the repo root. Community Cloud installs from it, and the CPU

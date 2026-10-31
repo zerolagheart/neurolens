@@ -1,0 +1,71 @@
+{
+  "format_version": 1,
+  "exported_at": "2026-10-31T10:02:01+00:00",
+  "model_name": "efficientnet_b0_baseline",
+  "model_version": "efficientnet_b0_baseline-e005",
+  "architecture": "efficientnet_b0",
+  "gradcam_layer": "features[-1]",
+  "cam_method": "Grad-CAM for a GAP + linear head (channel weights = final linear weights)",
+  "class_names": [
+    "glioma",
+    "meningioma",
+    "notumor",
+    "pituitary"
+  ],
+  "display_names": [
+    "Glioma",
+    "Meningioma",
+    "No tumor",
+    "Pituitary tumor"
+  ],
+  "preprocessing": {
+    "image_size": 224,
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "color_mode": "RGB (grayscale replicated to 3 channels)",
+    "resize": "bilinear resize to image_size x image_size (aspect ratio not preserved)"
+  },
+  "temperature": 1.0353924705406197,
+  "abstention": {
+    "enabled": true,
+    "min_confidence": 0.7,
+    "max_normalized_entropy": 0.6
+  },
+  "benchmark": "original",
+  "offline_evaluation": {
+    "benchmark": "original",
+    "split": "test",
+    "n_samples": 1600,
+    "accuracy": 0.954375,
+    "balanced_accuracy": 0.954375,
+    "macro_f1": 0.9534428946421435,
+    "roc_auc_ovr_macro": 0.9939255208333333,
+    "per_class_recall": {
+      "glioma": 0.8375,
+      "meningioma": 0.985,
+      "notumor": 1.0,
+      "pituitary": 0.995
+    },
+    "ece_raw": 0.03222140466441056,
+    "ece_calibrated": 0.032617365028198765,
+    "evaluated_at": "2026-10-29T18:08:11+00:00"
+  },
+  "parity": {
+    "inputs": "8 validation images",
+    "max_abs_prob_diff": 1.907953051105693e-08,
+    "max_abs_logit_diff": 0.00037384033203125,
+    "max_abs_cam_diff_vs_gradcam": 1.8298625946044922e-05,
+    "top1_agreement": 1.0,
+    "prob_tolerance": 0.0001,
+    "cam_tolerance": 0.001
+  },
+  "onnx_size_mb": 15.29
+}

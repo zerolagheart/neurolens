@@ -1,0 +1,6 @@
+# Serverless function dependencies only. No PyTorch: inference runs on ONNX Runtime.
+fastapi>=0.115,<1
+python-multipart>=0.0.9,<1
+numpy>=1.26,<3
+pillow>=10.2,<14
+onnxruntime>=1.18,<2

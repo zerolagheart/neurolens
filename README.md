@@ -110,6 +110,7 @@ neurolens/
 │   ├── inference/           predictor, registry, image_io
 │   ├── optimization/        onnx_export
 │   └── cli.py               `neurolens` command
+├── deploy/vercel/           PyTorch-free web demo for Vercel (static page + ONNX function)
 ├── configs/                 resnet18, efficientnet_b0, custom_cnn, resnet18_leakage_audited
 ├── scripts/                 thin wrappers: python scripts/train.py --config …
 ├── tests/                   pytest suite (synthetic images, temp dirs)
@@ -274,8 +275,11 @@ By default the app runs models in-process through the same `ModelService` as the
 `NEUROLENS_API_URL=http://localhost:8000` to make it call the API instead. Prediction is disabled
 (with setup instructions) when no trained checkpoint exists.
 
-Publishing a live demo (Streamlit Community Cloud, Hugging Face Spaces or any Docker host) is
-covered in [docs/deployment.md](docs/deployment.md).
+Publishing a live demo is covered in [docs/deployment.md](docs/deployment.md). For **Vercel**
+there is a dedicated PyTorch-free web demo in [`deploy/vercel/`](deploy/vercel/README.md): a
+static page plus an ONNX Runtime function with exact Grad-CAM, already bundled with the
+EfficientNet-B0 model. Streamlit Community Cloud, Hugging Face Spaces and Docker hosts are
+covered too.
 
 ### Screenshots
 

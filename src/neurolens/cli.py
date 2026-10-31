@@ -212,6 +212,22 @@ def _cmd_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_export_web(args: argparse.Namespace) -> int:
+    from neurolens.optimization.web_export import export_web_bundle
+
+    run_dir = resolve_run(args.run, Path(args.runs_dir))
+    meta = export_web_bundle(run_dir, Path(args.out), opset=args.opset)
+    parity = meta["parity"]
+    print(f"Web bundle for {meta['model_name']} -> {Path(args.out).as_posix()}")
+    print(f"  model.onnx {meta['onnx_size_mb']} MB, temperature {meta['temperature']}")
+    print(
+        f"  parity on {parity['inputs']}: max |dp| {parity['max_abs_prob_diff']:.1e}, "
+        f"CAM vs Grad-CAM {parity['max_abs_cam_diff_vs_gradcam']:.1e}, "
+        f"top-1 agreement {parity['top1_agreement']:.3f}"
+    )
+    return 0
+
+
 def _cmd_benchmark(args: argparse.Namespace) -> int:
     from neurolens.evaluation.benchmark import benchmark_run
 
@@ -318,6 +334,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--samples", type=int, default=32, help="validation images for parity checks")
     p.add_argument("--iterations", type=int, default=50)
     p.set_defaults(func=_cmd_export)
+
+    p = sub.add_parser("export-web", help="export a PyTorch-free bundle for deploy/vercel")
+    p.add_argument("--run", required=True)
+    p.add_argument("--runs-dir", default=str(DEFAULT_RUNS_DIR))
+    p.add_argument("--out", default="deploy/vercel/model")
+    p.add_argument("--opset", type=int, default=17)
+    p.set_defaults(func=_cmd_export_web)
 
     p = sub.add_parser("benchmark", help="measure PyTorch inference latency")
     run_args(p)

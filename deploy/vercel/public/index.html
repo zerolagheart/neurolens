@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeuroLens — MRI Demo</title>
+<meta name="description" content="Research demo: explainable brain MRI image classification with Grad-CAM. Not a medical device.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%232dd4bf' stroke-width='3'/><circle cx='16' cy='16' r='4' fill='%232dd4bf'/></svg>">
+<style>
+  :root {
+    --bg: #0b1220; --panel: #111a2b; --panel-2: #0e1626; --border: #1f2a3d;
+    --ink: #e2e8f0; --ink-2: #94a3b8; --accent: #2dd4bf; --accent-ink: #062b28;
+    --warn: #fab219; --warn-bg: #17140d; --warn-border: #3b3220;
+    --ok: #0ca30c; --error: #e66767;
+    --raw: #3987e5; --cal: #d95926;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 32px 16px 56px; }
+  header .eyebrow { color: var(--accent); font-size: .75rem; font-weight: 650; letter-spacing: .12em;
+                    text-transform: uppercase; }
+  header h1 { margin: .15rem 0 .25rem; font-size: 2.1rem; letter-spacing: -.01em; }
+  header p { margin: 0; color: var(--ink-2); max-width: 720px; }
+  .disclaimer { margin: 18px 0 24px; padding: 10px 14px; border: 1px solid var(--warn-border);
+                border-left: 3px solid var(--warn); background: var(--warn-bg); border-radius: 8px;
+                color: #e9dcc0; font-size: .88rem; }
+  .grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 18px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  .card h2 { margin: 0 0 12px; font-size: 1rem; }
+  .label { color: var(--ink-2); font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; }
+  .drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+          min-height: 150px; border: 1px dashed #2b3a52; border-radius: 10px; background: var(--panel-2);
+          color: var(--ink-2); text-align: center; padding: 16px; cursor: pointer; }
+  .drop.over { border-color: var(--accent); color: var(--ink); }
+  .drop strong { color: var(--ink); }
+  #preview-slot img { width: 100%; margin-top: 12px; border-radius: 8px; border: 1px solid var(--border); display: block; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; padding: 9px 16px; border: 1px solid var(--border);
+           background: var(--panel-2); color: var(--ink); }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 650; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button:focus-visible, .drop:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .muted { color: var(--ink-2); font-size: .85rem; }
+  .empty { color: var(--ink-2); padding: 28px 8px; text-align: center; }
+  .pred { font-size: 1.9rem; font-weight: 650; line-height: 1.2; margin: 2px 0 12px; }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .stat { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+  .stat .v { font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .notice { border-radius: 8px; padding: 10px 12px; font-size: .88rem; margin: 10px 0; }
+  .notice.warn { background: var(--warn-bg); border: 1px solid var(--warn-border); color: #f3e2b8; }
+  .notice.ok { background: #0d1a12; border: 1px solid #1d3b24; color: #b9e6c0; }
+  .notice.err { background: #1f1012; border: 1px solid #4a2226; color: #f3c1c1; }
+  .legend { display: flex; gap: 16px; font-size: .8rem; color: var(--ink-2); margin: 6px 0 10px; }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .bars { display: grid; gap: 10px; }
+  .bar-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; align-items: center; }
+  .bar-name { font-size: .88rem; }
+  .bar-track { display: grid; gap: 3px; }
+  .bar { position: relative; height: 14px; background: #16233a; border-radius: 4px; overflow: hidden; }
+  .bar span { position: absolute; inset: 0 auto 0 0; border-radius: 4px; }
+  .bar em { position: absolute; right: 6px; top: -1px; font-style: normal; font-size: .72rem;
+            color: var(--ink); font-variant-numeric: tabular-nums; }
+  .cam { margin-top: 18px; }
+  .cam-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .cam-grid figure { margin: 0; }
+  .cam-grid img { width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; }
+  .cam-grid figcaption { display: flex; justify-content: space-between; align-items: center; margin-top: 6px;
+                         font-size: .85rem; color: var(--ink-2); }
+  .cam-grid a { font-size: .8rem; }
+  .jet { height: 12px; border-radius: 3px; max-width: 420px;
+         background: linear-gradient(90deg, #00008f, #0000ff 11%, #00ffff 36%, #7fff7f 50%, #ffff00 64%, #ff0000 89%, #800000); }
+  .jet-labels { display: flex; justify-content: space-between; max-width: 420px; font-size: .75rem; color: var(--ink-2); }
+  .model { margin-top: 18px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  footer { margin-top: 28px; color: var(--ink-2); font-size: .85rem; }
+  footer ul { padding-left: 18px; }
+  .spinner { width: 16px; height: 16px; border: 2px solid #ffffff55; border-top-color: var(--accent-ink);
+             border-radius: 50%; display: inline-block; animation: spin .8s linear infinite; vertical-align: -3px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: 1fr; }
+    .model { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 520px) {
+    .cam-grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .bar-row { grid-template-columns: 1fr; gap: 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Explainable MRI classification · research demo</div>
+    <h1>NeuroLens</h1>
+    <p>Upload a single brain MRI slice to see how a model trained on the public Nickparvar Brain Tumor
+      MRI dataset scores it across four dataset labels, how confident it is, and which regions
+      drove its prediction (Grad-CAM).</p>
+  </header>
+
+  <div class="disclaimer" role="note"><b>Research and educational use only.</b> NeuroLens is not a medical
+    device and its output is not a medical diagnosis. Image-level classification does not localise or
+    segment tumours, and model scores are not clinically validated. Do not upload identifiable patient data.</div>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="upload-title">
+      <h2 id="upload-title">1 · Upload an image</h2>
+      <label class="drop" id="drop" tabindex="0">
+        <strong>Choose an MRI slice</strong>
+        <span>or drop it here · JPEG, PNG, BMP or TIFF · up to <span id="limit">4</span> MB</span>
+        <input id="file" type="file" accept=".jpg,.jpeg,.png,.bmp,.tif,.tiff,image/*" hidden>
+      </label>
+      <div id="preview-slot"></div>
+      <div class="row">
+        <button class="primary" id="run" disabled>Analyse image</button>
+        <span class="muted" id="filename">No file selected</span>
+      </div>
+      <p class="muted">Images are processed in memory for this request and not stored. The first request after
+        a quiet period can take a few seconds while the model loads.</p>
+    </section>
+
+    <section class="card" aria-labelledby="result-title" aria-live="polite">
+      <h2 id="result-title">2 · Prediction</h2>
+      <div id="result"><div class="empty">Results appear here after you analyse an image.</div></div>
+    </section>
+  </div>
+
+  <section class="card cam" id="cam-section" hidden aria-labelledby="cam-title">
+    <h2 id="cam-title">3 · Grad-CAM explanation</h2>
+    <p class="muted" id="cam-meta"></p>
+    <div class="cam-grid" id="cam-grid"></div>
+    <div style="margin-top:14px">
+      <div class="jet" aria-hidden="true"></div>
+      <div class="jet-labels"><span>low</span><span>relative influence on the predicted class score</span><span>high</span></div>
+    </div>
+    <div class="notice warn" id="cam-note"></div>
+    <div class="row"><button id="download-json">Download JSON report</button></div>
+  </section>
+
+  <section class="card" style="margin-top:18px" aria-labelledby="model-title">
+    <h2 id="model-title">Model</h2>
+    <div id="model-info" class="muted">Loading model information…</div>
+  </section>
+
+  <footer>
+    <ul>
+      <li>Metrics shown are offline results on the dataset's original test split. The project's audit found many
+        near-duplicate links between that split and the training data, so they are likely optimistic.</li>
+      <li>Probabilities are not certainty; the abstention thresholds are illustrative, not clinically validated.</li>
+      <li>Grad-CAM shows what influenced the model's score, coarsely. It is not a segmentation or a medical finding.</li>
+    </ul>
+    <p>Source code, training pipeline and full limitations:
+      <a href="https://github.com/zerolagheart/neurolens">github.com/zerolagheart/neurolens</a>.</p>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const fileInput = $("file"), drop = $("drop"), runBtn = $("run");
+  let maxBytes = 4 * 1024 * 1024, current = null, lastReport = null;
+
+  const fmt = (v, d = 3) => (v === null || v === undefined) ? "—" : Number(v).toFixed(d);
+  const pct = (v) => (v === null || v === undefined) ? "—" : (v * 100).toFixed(1) + "%";
+  const el = (tag, props = {}, children = []) => {
+    const node = Object.assign(document.createElement(tag), props);
+    for (const c of [].concat(children)) node.append(c);
+    return node;
+  };
+
+  async function loadInfo() {
+    const box = $("model-info");
+    try {
+      const r = await fetch("/api/info");
+      if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+      const info = await r.json();
+      maxBytes = info.max_upload_mb * 1024 * 1024;
+      $("limit").textContent = info.max_upload_mb.toFixed(0);
+      const ev = info.offline_evaluation;
+      const stat = (label, value) => el("div", { className: "stat" }, [
+        el("div", { className: "label", textContent: label }), el("div", { className: "v", textContent: value })]);
+      box.className = "";
+      box.replaceChildren(
+        el("p", { className: "muted", textContent:
+          `${info.architecture} · run ${info.model_version} · benchmark “${info.benchmark}” · ` +
+          `temperature ${info.temperature ? fmt(info.temperature, 2) : "not fitted"} · ` +
+          `Grad-CAM layer ${info.gradcam_layer}` }),
+        ev ? el("div", { className: "model" }, [
+          stat(`Test accuracy (n=${ev.n_samples})`, fmt(ev.accuracy, 4)),
+          stat("Macro F1", fmt(ev.macro_f1, 4)),
+          stat("ROC-AUC (OvR macro)", fmt(ev.roc_auc_ovr_macro, 4)),
+          stat("Glioma recall", fmt(ev.per_class_recall.glioma, 3)),
+        ]) : el("p", { textContent: "No offline evaluation was bundled with this model." })
+      );
+      runBtn.disabled = !current;
+    } catch (err) {
+      box.replaceChildren(el("div", { className: "notice err", textContent: "Model unavailable: " + err.message }));
+      runBtn.disabled = true;
+    }
+  }
+
+  function pick(file) {
+    if (!file) return;
+    if (file.size > maxBytes) {
+      showError(`That file is ${(file.size / 1048576).toFixed(1)} MB; the limit is ${(maxBytes / 1048576).toFixed(0)} MB.`);
+      return;
+    }
+    current = file;
+    $("filename").textContent = file.name;
+    $("preview-slot").replaceChildren(el("img", { src: URL.createObjectURL(file), alt: "Uploaded image preview" }));
+    runBtn.disabled = false;
+  }
+
+  fileInput.addEventListener("change", () => pick(fileInput.files[0]));
+  drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); } });
+  ["dragenter", "dragover"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", (e) => pick(e.dataTransfer.files[0]));
+
+  function showError(message) {
+    $("result").replaceChildren(el("div", { className: "notice err", textContent: message }));
+    $("cam-section").hidden = true;
+  }
+
+  runBtn.addEventListener("click", async () => {
+    if (!current) return;
+    runBtn.disabled = true;
+    runBtn.replaceChildren(el("span", { className: "spinner" }), " Analysing…");
+    try {
+      const body = new FormData();
+      body.append("file", current);
+      const r = await fetch("/api/analyze", { method: "POST", body });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.detail || `Request failed (${r.status})`);
+      render(data);
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      runBtn.disabled = false;
+      runBtn.textContent = "Analyse image";
+    }
+  });
+
+  function render(data) {
+    const p = data.prediction, x = data.explanation, u = p.uncertainty;
+    const stat = (label, value, title) => el("div", { className: "stat", title }, [
+      el("div", { className: "label", textContent: label }), el("div", { className: "v", textContent: value })]);
+    const bars = p.class_names.map((name, i) => {
+      const raw = p.raw_probabilities[name];
+      const cal = p.calibrated_probabilities ? p.calibrated_probabilities[name] : null;
+      const bar = (v, color, label) => el("div", { className: "bar", title: `${label}: ${fmt(v)}` }, [
+        el("span", { style: `width:${(v * 100).toFixed(1)}%;background:${color}` }), el("em", { textContent: pct(v) })]);
+      return el("div", { className: "bar-row" }, [
+        el("div", { className: "bar-name", textContent: p.display_names[i] }),
+        el("div", { className: "bar-track" }, [bar(raw, "var(--raw)", "raw"), ...(cal !== null ? [bar(cal, "var(--cal)", "calibrated")] : [])]),
+      ]);
+    });
+    const legend = el("div", { className: "legend" }, [
+      el("span", {}, [el("i", { className: "swatch", style: "background:var(--raw)" }), "raw softmax"]),
+      ...(p.calibrated_probabilities ? [el("span", {}, [el("i", { className: "swatch", style: "background:var(--cal)" }),
+        `calibrated (T=${fmt(p.model.temperature, 2)})`])] : []),
+    ]);
+    const decision = u.abstained
+      ? el("div", { className: "notice warn" }, [el("b", { textContent: "Uncertainty warning — not accepted by the configured policy. " }),
+          u.reasons.join("; ") + ". Thresholds are configuration choices, not clinical safety limits."])
+      : el("div", { className: "notice ok", textContent:
+          `Accepted by the configured policy (min ${fmt(u.policy.min_confidence, 2)} on ${u.probabilities_used} probabilities). ` +
+          "A high score is not a guarantee of correctness." });
+    $("result").replaceChildren(
+      el("div", { className: "label", textContent: "Predicted dataset class" }),
+      el("div", { className: "pred", textContent: p.predicted_label }),
+      el("div", { className: "stats" }, [
+        stat("Raw score", fmt(p.raw_confidence), "max softmax(logits)"),
+        stat("Calibrated", fmt(p.calibrated_confidence), "max softmax(logits / T), T fitted on validation data"),
+        stat("Norm. entropy", fmt(u.normalized_entropy), "0 = certain, 1 = uniform"),
+      ]),
+      decision, legend, el("div", { className: "bars" }, bars),
+      ...p.warnings.map((w) => el("p", { className: "muted", textContent: "⚠ " + w })),
+    );
+
+    const imgs = [["original", x.original_png_base64], ["heatmap", x.heatmap_png_base64], ["overlay", x.overlay_png_base64]];
+    $("cam-grid").replaceChildren(...imgs.map(([name, b64]) => {
+      const src = "data:image/png;base64," + b64;
+      return el("figure", {}, [el("img", { src, alt: `Grad-CAM ${name}` }), el("figcaption", {}, [
+        name[0].toUpperCase() + name.slice(1), el("a", { href: src, download: `neurolens_${name}.png`, textContent: "Download" })])]);
+    }));
+    $("cam-meta").textContent = `Target: ${p.predicted_label} (predicted class) · layer ${x.target_layer} · shown at model input resolution` +
+      (x.degenerate ? " · the map is all zeros for this image (no positive evidence at this layer)" : "");
+    $("cam-note").textContent = x.interpretation_note;
+    $("cam-section").hidden = false;
+    lastReport = { prediction: p, explanation: Object.fromEntries(Object.entries(x).filter(([k]) => !k.endsWith("_base64"))) };
+  }
+
+  $("download-json").addEventListener("click", () => {
+    if (!lastReport) return;
+    const url = URL.createObjectURL(new Blob([JSON.stringify(lastReport, null, 2)], { type: "application/json" }));
+    el("a", { href: url, download: "neurolens_report.json" }).click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  loadInfo();
+})();
+</script>
+</body>
+</html>
