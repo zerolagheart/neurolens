@@ -51,9 +51,9 @@ h1, h2, h3 { letter-spacing: -0.01em; }
                  letter-spacing: .06em; }
 .nl-stat-value { color: var(--nl-ink); font-size: 1.6rem; font-weight: 600; line-height: 1.25; }
 .nl-stat-note { color: var(--nl-ink2); font-size: .8rem; }
-.nl-disclaimer { border: 1px solid #3b3220; border-left: 3px solid var(--nl-warn);
-                 background: #17140d; border-radius: 8px; padding: .7rem 1rem; color: #e9dcc0;
-                 font-size: .88rem; margin: .4rem 0 1.2rem 0; }
+.nl-disclaimer { border: 1px solid #5a4a26; background: #17140d; border-radius: 8px;
+                 padding: .7rem 1rem; color: #e9dcc0; font-size: .88rem; margin: .4rem 0 1.2rem 0; }
+.nl-disclaimer b { color: var(--nl-warn); }
 .nl-empty { border: 1px dashed var(--nl-border); border-radius: 10px; padding: 1.4rem 1.4rem;
             background: #0e1626; }
 .nl-empty h4 { margin-top: 0; }
